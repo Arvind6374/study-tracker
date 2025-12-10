@@ -40,3 +40,35 @@
 .read-the-docs {
   color: #888;
 }
+.primary-btn.small {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  color: #38bdf8;
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 0.5rem;
+}
+
+.link-btn:hover {
+  text-decoration: underline;
+}
+/* Minimal reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: #0f172a; /* matches your dark theme */
+  color: #e5e7eb;
+  font-family: system-ui, sans-serif;
+  min-height: 100vh;
+}
+

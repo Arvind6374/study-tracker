@@ -26,8 +26,19 @@ const initialSessions = [
 ];
 
 function App() {
-  const [sessions] = useState(initialSessions);
+  const [sessions, setSessions] = useState(initialSessions);
+  
+  function handleToggleCompleted(id) {
+    setSessions((prev) =>
+      prev.map((session) =>
+        session.id === id
+          ? { ...session, completed: !session.completed }
+          : session
+      )
+    );
+  }
 
+  
   return (
     <div className="app">
       <header className="app-header">
@@ -60,8 +71,28 @@ function App() {
                     <td>{session.duration}</td>
                     <td>{session.date}</td>
                     <td>
-                      {session.completed ? "✅ Completed" : "⏳ Pending"}
+                      {session.completed ? (
+                        <>
+                          ✅ Completed{" "}
+                           <button
+                            type="button"
+                            className="link-btn"
+                            onClick={() => handleToggleCompleted(session.id)}
+                          >
+                            Undo
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          className="primary-btn small"
+                          onClick={() => handleToggleCompleted(session.id)}
+                        >
+                          Mark as completed
+                        </button>
+                      )}
                     </td>
+
                   </tr>
                 ))}
               </tbody>
