@@ -35,6 +35,9 @@ function App() {
     notes: "",
   });
 
+  // NEW: filter state: "all" | "completed" | "pending"
+  const [filter, setFilter] = useState("all");
+
   function handleChange(e) {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -62,7 +65,6 @@ function App() {
 
     setSessions((prev) => [...prev, newSession]);
 
-    // reset form
     setFormData({
       subject: "",
       duration: "",
@@ -80,6 +82,13 @@ function App() {
       )
     );
   }
+
+  // NEW: derived list based on filter
+  const filteredSessions = sessions.filter((session) => {
+    if (filter === "completed") return session.completed;
+    if (filter === "pending") return !session.completed;
+    return true; // "all"
+  });
 
   return (
     <div className="app">
@@ -151,10 +160,43 @@ function App() {
 
         {/* List section */}
         <section className="session-list">
-          <h2>Study Sessions</h2>
+          <div className="session-list-header">
+            <h2>Study Sessions</h2>
 
-          {sessions.length === 0 ? (
-            <p>No sessions yet. Start by adding one!</p>
+            {/* NEW: filter buttons */}
+            <div className="filter-buttons">
+              <button
+                type="button"
+                className={`filter-btn ${
+                  filter === "all" ? "active" : ""
+                }`}
+                onClick={() => setFilter("all")}
+              >
+                All
+              </button>
+              <button
+                type="button"
+                className={`filter-btn ${
+                  filter === "completed" ? "active" : ""
+                }`}
+                onClick={() => setFilter("completed")}
+              >
+                Completed
+              </button>
+              <button
+                type="button"
+                className={`filter-btn ${
+                  filter === "pending" ? "active" : ""
+                }`}
+                onClick={() => setFilter("pending")}
+              >
+                Pending
+              </button>
+            </div>
+          </div>
+
+          {filteredSessions.length === 0 ? (
+            <p>No sessions for this filter.</p>
           ) : (
             <table>
               <thead>
@@ -167,7 +209,7 @@ function App() {
                 </tr>
               </thead>
               <tbody>
-                {sessions.map((session, index) => (
+                {filteredSessions.map((session, index) => (
                   <tr key={session.id}>
                     <td>{index + 1}</td>
                     <td>{session.subject}</td>
