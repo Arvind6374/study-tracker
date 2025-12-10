@@ -15,9 +15,9 @@ Built with **React + Vite**, deployed using **GitHub Actions (CI/CD)** to **GitH
 ## 📸 Screenshots
 
 ### 🖥 Main Dashboard
-![Study Tracker Screenshot](./screenshot.png)
+![Study Tracker Screenshot](./Screenshot.png)
 
-*(Add your screenshot into repo as `screenshot.png`)*
+
 
 ---
 
