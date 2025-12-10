@@ -123,9 +123,11 @@ function App() {
     );
   }
 
-  // 🗑️ NEW: delete session
+  // 🗑️ Delete session handler (Task 2)
   function handleDeleteSession(id) {
-    const ok = window.confirm("Are you sure you want to delete this session?");
+    const ok = window.confirm(
+      "Are you sure you want to delete this session?"
+    );
     if (!ok) return;
 
     setSessions((prev) => prev.filter((session) => session.id !== id));
@@ -297,7 +299,7 @@ function App() {
                   <th>Duration (mins)</th>
                   <th>Date</th>
                   <th>Status</th>
-                  <th>Actions</th> {/* 🆕 */}
+                  <th>Actions</th> {/* Task 2 column */}
                 </tr>
               </thead>
               <tbody>
