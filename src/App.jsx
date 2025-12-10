@@ -125,6 +125,16 @@ function App() {
     );
   }
 
+  // 🗑️ NEW: delete session handler (Task 2)
+  function handleDeleteSession(id) {
+    const ok = window.confirm(
+      "Are you sure you want to delete this session?"
+    );
+    if (!ok) return;
+
+    setSessions((prev) => prev.filter((session) => session.id !== id));
+  }
+
   function handleResetData() {
     setSessions(initialSessions);
     try {
@@ -275,7 +285,11 @@ function App() {
               </div>
 
               {/* optional reset button */}
-              <button type="button" className="link-btn" onClick={handleResetData}>
+              <button
+                type="button"
+                className="link-btn"
+                onClick={handleResetData}
+              >
                 Reset to sample data
               </button>
             </div>
@@ -292,6 +306,7 @@ function App() {
                   <th>Duration (mins)</th>
                   <th>Date</th>
                   <th>Status</th>
+                  <th>Actions</th> {/* 🆕 Task 2 column */}
                 </tr>
               </thead>
               <tbody>
@@ -322,6 +337,15 @@ function App() {
                           Mark as completed
                         </button>
                       )}
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        className="link-btn danger"
+                        onClick={() => handleDeleteSession(session.id)}
+                      >
+                        Delete
+                      </button>
                     </td>
                   </tr>
                 ))}
