@@ -74,8 +74,6 @@ function App() {
     [sessions]
   );
 
-  const pendingCount = totalSessions - completedCount;
-
   const completionRate = totalSessions
     ? Math.round((completedCount / totalSessions) * 100)
     : 0;
@@ -125,7 +123,7 @@ function App() {
     );
   }
 
-  // 🗑️ NEW: delete session handler (Task 2)
+  // 🗑️ Delete session handler (Task 2)
   function handleDeleteSession(id) {
     const ok = window.confirm(
       "Are you sure you want to delete this session?"
@@ -175,11 +173,6 @@ function App() {
           <span className="stat-value">
             {completedCount} / {totalSessions}
           </span>
-        </div>
-
-        <div className="stat-card">
-          <span className="stat-label">Pending</span>
-          <span className="stat-value">{pendingCount}</span>
         </div>
 
         <div className="stat-card">
@@ -284,7 +277,7 @@ function App() {
                 </button>
               </div>
 
-              {/* optional reset button */}
+              {/* reset button */}
               <button
                 type="button"
                 className="link-btn"
@@ -306,7 +299,7 @@ function App() {
                   <th>Duration (mins)</th>
                   <th>Date</th>
                   <th>Status</th>
-                  <th>Actions</th> {/* 🆕 Task 2 column */}
+                  <th>Actions</th> {/* Task 2 column */}
                 </tr>
               </thead>
               <tbody>
