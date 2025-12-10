@@ -5,7 +5,7 @@ const initialSessions = [
   {
     id: 1,
     subject: "Data Structures & Algorithms",
-    duration: 60, // minutes
+    duration: 60,
     date: "2025-12-10",
     completed: false,
   },
@@ -26,7 +26,50 @@ const initialSessions = [
 ];
 
 function App() {
-  const [sessions] = useState(initialSessions);
+  const [sessions, setSessions] = useState(initialSessions);
+
+  const [formData, setFormData] = useState({
+    subject: "",
+    duration: "",
+    date: "",
+    notes: "",
+  });
+
+  function handleChange(e) {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  }
+
+  function handleSubmit(e) {
+    e.preventDefault();
+
+    if (!formData.subject || !formData.duration || !formData.date) {
+      alert("Subject, duration and date are required.");
+      return;
+    }
+
+    const newSession = {
+      id: Date.now(),
+      subject: formData.subject,
+      duration: Number(formData.duration),
+      date: formData.date,
+      notes: formData.notes,
+      completed: false,
+    };
+
+    setSessions((prev) => [...prev, newSession]);
+
+    // reset form
+    setFormData({
+      subject: "",
+      duration: "",
+      date: "",
+      notes: "",
+    });
+  }
 
   return (
     <div className="app">
@@ -35,7 +78,68 @@ function App() {
         <p>Track your daily study sessions in one place.</p>
       </header>
 
-      <main>
+      <main className="layout">
+        {/* Form section */}
+        <section className="session-form">
+          <h2>Add New Session</h2>
+          <form onSubmit={handleSubmit}>
+            <div className="field">
+              <label htmlFor="subject">Subject</label>
+              <input
+                id="subject"
+                name="subject"
+                type="text"
+                value={formData.subject}
+                onChange={handleChange}
+                placeholder="e.g. DSA, DBMS..."
+                required
+              />
+            </div>
+
+            <div className="field">
+              <label htmlFor="duration">Duration (minutes)</label>
+              <input
+                id="duration"
+                name="duration"
+                type="number"
+                min="1"
+                value={formData.duration}
+                onChange={handleChange}
+                placeholder="e.g. 45"
+                required
+              />
+            </div>
+
+            <div className="field">
+              <label htmlFor="date">Date</label>
+              <input
+                id="date"
+                name="date"
+                type="date"
+                value={formData.date}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            <div className="field">
+              <label htmlFor="notes">Notes (optional)</label>
+              <textarea
+                id="notes"
+                name="notes"
+                value={formData.notes}
+                onChange={handleChange}
+                placeholder="Topic, chapter, or any notes..."
+              />
+            </div>
+
+            <button type="submit" className="primary-btn">
+              Add Session
+            </button>
+          </form>
+        </section>
+
+        {/* List section */}
         <section className="session-list">
           <h2>Study Sessions</h2>
 
