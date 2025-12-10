@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import "./App.css";
+
+const STORAGE_KEY = "study-tracker:sessions";
 
 const initialSessions = [
   {
@@ -26,7 +28,19 @@ const initialSessions = [
 ];
 
 function App() {
-  const [sessions, setSessions] = useState(initialSessions);
+  // Load sessions from localStorage (fallback to initialSessions)
+  const [sessions, setSessions] = useState(() => {
+    try {
+      const stored = window.localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (err) {
+      console.error("Failed to load sessions from localStorage:", err);
+    }
+    return initialSessions;
+  });
 
   const [formData, setFormData] = useState({
     subject: "",
@@ -35,8 +49,36 @@ function App() {
     notes: "",
   });
 
-  // NEW: filter state: "all" | "completed" | "pending"
+  // filter state: "all" | "completed" | "pending"
   const [filter, setFilter] = useState("all");
+
+  // Save sessions to localStorage whenever they change
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
+    } catch (err) {
+      console.error("Failed to save sessions to localStorage:", err);
+    }
+  }, [sessions]);
+
+  // 📊 Derived stats
+  const totalSessions = sessions.length;
+
+  const totalMinutes = useMemo(
+    () => sessions.reduce((sum, s) => sum + (Number(s.duration) || 0), 0),
+    [sessions]
+  );
+
+  const completedCount = useMemo(
+    () => sessions.filter((s) => s.completed).length,
+    [sessions]
+  );
+
+  const pendingCount = totalSessions - completedCount;
+
+  const completionRate = totalSessions
+    ? Math.round((completedCount / totalSessions) * 100)
+    : 0;
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -83,7 +125,16 @@ function App() {
     );
   }
 
-  // NEW: derived list based on filter
+  function handleResetData() {
+    setSessions(initialSessions);
+    try {
+      window.localStorage.removeItem(STORAGE_KEY);
+    } catch (err) {
+      console.error("Failed to clear localStorage:", err);
+    }
+  }
+
+  // derived list based on filter
   const filteredSessions = sessions.filter((session) => {
     if (filter === "completed") return session.completed;
     if (filter === "pending") return !session.completed;
@@ -96,6 +147,36 @@ function App() {
         <h1>Study Tracker</h1>
         <p>Track your daily study sessions in one place.</p>
       </header>
+
+      {/* 📊 Stats summary */}
+      <section className="stats-bar">
+        <div className="stat-card">
+          <span className="stat-label">Total Sessions</span>
+          <span className="stat-value">{totalSessions}</span>
+        </div>
+
+        <div className="stat-card">
+          <span className="stat-label">Total Minutes</span>
+          <span className="stat-value">{totalMinutes}</span>
+        </div>
+
+        <div className="stat-card">
+          <span className="stat-label">Completed</span>
+          <span className="stat-value">
+            {completedCount} / {totalSessions}
+          </span>
+        </div>
+
+        <div className="stat-card">
+          <span className="stat-label">Pending</span>
+          <span className="stat-value">{pendingCount}</span>
+        </div>
+
+        <div className="stat-card">
+          <span className="stat-label">Completion Rate</span>
+          <span className="stat-value">{completionRate}%</span>
+        </div>
+      </section>
 
       <main className="layout">
         {/* Form section */}
@@ -163,34 +244,39 @@ function App() {
           <div className="session-list-header">
             <h2>Study Sessions</h2>
 
-            {/* NEW: filter buttons */}
-            <div className="filter-buttons">
-              <button
-                type="button"
-                className={`filter-btn ${
-                  filter === "all" ? "active" : ""
-                }`}
-                onClick={() => setFilter("all")}
-              >
-                All
-              </button>
-              <button
-                type="button"
-                className={`filter-btn ${
-                  filter === "completed" ? "active" : ""
-                }`}
-                onClick={() => setFilter("completed")}
-              >
-                Completed
-              </button>
-              <button
-                type="button"
-                className={`filter-btn ${
-                  filter === "pending" ? "active" : ""
-                }`}
-                onClick={() => setFilter("pending")}
-              >
-                Pending
+            <div className="header-actions">
+              {/* filter buttons */}
+              <div className="filter-buttons">
+                <button
+                  type="button"
+                  className={`filter-btn ${filter === "all" ? "active" : ""}`}
+                  onClick={() => setFilter("all")}
+                >
+                  All
+                </button>
+                <button
+                  type="button"
+                  className={`filter-btn ${
+                    filter === "completed" ? "active" : ""
+                  }`}
+                  onClick={() => setFilter("completed")}
+                >
+                  Completed
+                </button>
+                <button
+                  type="button"
+                  className={`filter-btn ${
+                    filter === "pending" ? "active" : ""
+                  }`}
+                  onClick={() => setFilter("pending")}
+                >
+                  Pending
+                </button>
+              </div>
+
+              {/* optional reset button */}
+              <button type="button" className="link-btn" onClick={handleResetData}>
+                Reset to sample data
               </button>
             </div>
           </div>
