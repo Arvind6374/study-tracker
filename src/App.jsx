@@ -1,35 +1,76 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState } from "react";
+import "./App.css";
+
+const initialSessions = [
+  {
+    id: 1,
+    subject: "Data Structures & Algorithms",
+    duration: 60, // minutes
+    date: "2025-12-10",
+    completed: false,
+  },
+  {
+    id: 2,
+    subject: "DBMS Revision",
+    duration: 45,
+    date: "2025-12-11",
+    completed: true,
+  },
+  {
+    id: 3,
+    subject: "Operating Systems",
+    duration: 30,
+    date: "2025-12-12",
+    completed: false,
+  },
+];
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [sessions] = useState(initialSessions);
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <div className="app">
+      <header className="app-header">
+        <h1>Study Tracker</h1>
+        <p>Track your daily study sessions in one place.</p>
+      </header>
+
+      <main>
+        <section className="session-list">
+          <h2>Study Sessions</h2>
+
+          {sessions.length === 0 ? (
+            <p>No sessions yet. Start by adding one!</p>
+          ) : (
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Subject</th>
+                  <th>Duration (mins)</th>
+                  <th>Date</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sessions.map((session, index) => (
+                  <tr key={session.id}>
+                    <td>{index + 1}</td>
+                    <td>{session.subject}</td>
+                    <td>{session.duration}</td>
+                    <td>{session.date}</td>
+                    <td>
+                      {session.completed ? "✅ Completed" : "⏳ Pending"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </section>
+      </main>
+    </div>
+  );
 }
 
-export default App
+export default App;
