@@ -74,8 +74,6 @@ function App() {
     [sessions]
   );
 
-  const pendingCount = totalSessions - completedCount;
-
   const completionRate = totalSessions
     ? Math.round((completedCount / totalSessions) * 100)
     : 0;
@@ -125,6 +123,14 @@ function App() {
     );
   }
 
+  // 🗑️ NEW: delete session
+  function handleDeleteSession(id) {
+    const ok = window.confirm("Are you sure you want to delete this session?");
+    if (!ok) return;
+
+    setSessions((prev) => prev.filter((session) => session.id !== id));
+  }
+
   function handleResetData() {
     setSessions(initialSessions);
     try {
@@ -165,11 +171,6 @@ function App() {
           <span className="stat-value">
             {completedCount} / {totalSessions}
           </span>
-        </div>
-
-        <div className="stat-card">
-          <span className="stat-label">Pending</span>
-          <span className="stat-value">{pendingCount}</span>
         </div>
 
         <div className="stat-card">
@@ -274,8 +275,12 @@ function App() {
                 </button>
               </div>
 
-              {/* optional reset button */}
-              <button type="button" className="link-btn" onClick={handleResetData}>
+              {/* reset button */}
+              <button
+                type="button"
+                className="link-btn"
+                onClick={handleResetData}
+              >
                 Reset to sample data
               </button>
             </div>
@@ -292,6 +297,7 @@ function App() {
                   <th>Duration (mins)</th>
                   <th>Date</th>
                   <th>Status</th>
+                  <th>Actions</th> {/* 🆕 */}
                 </tr>
               </thead>
               <tbody>
@@ -322,6 +328,15 @@ function App() {
                           Mark as completed
                         </button>
                       )}
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        className="link-btn danger"
+                        onClick={() => handleDeleteSession(session.id)}
+                      >
+                        Delete
+                      </button>
                     </td>
                   </tr>
                 ))}

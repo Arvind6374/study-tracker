@@ -252,3 +252,11 @@ tbody tr:hover {
     grid-template-columns: 1fr;
   }
 }
+.link-btn.danger {
+  color: #f87171;
+}
+
+.link-btn.danger:hover {
+  color: #fecaca;
+  text-decoration: underline;
+}
