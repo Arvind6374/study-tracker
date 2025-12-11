@@ -297,3 +297,51 @@ th.sortable {
   color: #fecaca;
   text-decoration: underline;
 }
+/* Edit modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 7, 18, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 80;
+  padding: 1.5rem;
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 520px;
+  background: #0b1220;
+  border-radius: 12px;
+  padding: 1.25rem 1.25rem;
+  box-shadow: 0 20px 50px rgba(2, 6, 23, 0.7);
+  border: 1px solid #142032;
+  color: #e5e7eb;
+}
+
+/* Slightly tighten modal field spacing */
+.modal-card .field {
+  margin-bottom: 0.75rem;
+}
+
+/* Make edit input visuals match form */
+.modal-card input,
+.modal-card textarea {
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid #1f2937;
+  background: #020617;
+  padding: 0.5rem 0.75rem;
+  color: #e5e7eb;
+}
+
+/* smaller Save button hint */
+.modal-card .primary-btn {
+  padding: 0.5rem 0.9rem;
+}
+
+/* Edit + delete small spacing in actions */
+.session-list td > .link-btn {
+  margin-right: 0.6rem;
+}
