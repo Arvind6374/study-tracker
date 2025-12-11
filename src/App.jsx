@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import "./App.css";
 
 const STORAGE_KEY = "study-tracker:sessions";
@@ -10,7 +10,7 @@ const initialSessions = [
     duration: 60, // minutes
     date: "2025-12-10",
     completed: false,
-    notes: "",
+    notes: "Arrays, Trees",
   },
   {
     id: 2,
@@ -18,7 +18,7 @@ const initialSessions = [
     duration: 45,
     date: "2025-12-11",
     completed: true,
-    notes: "",
+    notes: "Normalization",
   },
   {
     id: 3,
@@ -26,12 +26,12 @@ const initialSessions = [
     duration: 30,
     date: "2025-12-12",
     completed: false,
-    notes: "",
+    notes: "Scheduling",
   },
 ];
 
 function App() {
-  // Load sessions from localStorage (fallback to initialSessions)
+  // sessions with localStorage fallback
   const [sessions, setSessions] = useState(() => {
     try {
       const stored = window.localStorage.getItem(STORAGE_KEY);
@@ -45,6 +45,7 @@ function App() {
     return initialSessions;
   });
 
+  // add form state for creating new sessions
   const [formData, setFormData] = useState({
     subject: "",
     duration: "",
@@ -52,17 +53,21 @@ function App() {
     notes: "",
   });
 
-  // filter state: "all" | "completed" | "pending"
+  // filters, search, sorting
   const [filter, setFilter] = useState("all");
-
-  // search term and sorting
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: "date", direction: "asc" });
 
-  // 📝 Edit modal state: null or { id, subject, duration, date, notes }
+  // edit modal state: null or object with session fields
   const [editSession, setEditSession] = useState(null);
 
-  // Save sessions to localStorage whenever they change
+  // isClosing controls exit animation flow
+  const [isClosing, setIsClosing] = useState(false);
+
+  // ref to autofocus subject input inside modal
+  const editSubjectRef = useRef(null);
+
+  // persist sessions
   useEffect(() => {
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
@@ -71,18 +76,13 @@ function App() {
     }
   }, [sessions]);
 
-  // 📊 Derived stats
+  // derived stats
   const totalSessions = sessions.length;
-  const totalMinutes = useMemo(
-    () => sessions.reduce((sum, s) => sum + (Number(s.duration) || 0), 0),
-    [sessions]
-  );
-  const completedCount = useMemo(
-    () => sessions.filter((s) => s.completed).length,
-    [sessions]
-  );
+  const totalMinutes = useMemo(() => sessions.reduce((s, x) => s + (Number(x.duration) || 0), 0), [sessions]);
+  const completedCount = useMemo(() => sessions.filter((s) => s.completed).length, [sessions]);
   const completionRate = totalSessions ? Math.round((completedCount / totalSessions) * 100) : 0;
 
+  // form handlers
   function handleChange(e) {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -106,20 +106,19 @@ function App() {
     setFormData({ subject: "", duration: "", date: "", notes: "" });
   }
 
+  // toggle completed
   function handleToggleCompleted(id) {
-    setSessions((prev) =>
-      prev.map((session) => (session.id === id ? { ...session, completed: !session.completed } : session))
-    );
+    setSessions((prev) => prev.map((s) => (s.id === id ? { ...s, completed: !s.completed } : s)));
   }
 
-  // Delete session
+  // delete
   function handleDeleteSession(id) {
     const ok = window.confirm("Are you sure you want to delete this session?");
     if (!ok) return;
-    setSessions((prev) => prev.filter((session) => session.id !== id));
+    setSessions((prev) => prev.filter((s) => s.id !== id));
   }
 
-  // Reset
+  // reset
   function handleResetData() {
     setSessions(initialSessions);
     try {
@@ -132,7 +131,7 @@ function App() {
     setSortConfig({ key: "date", direction: "asc" });
   }
 
-  // Search and sort handlers
+  // search + sort handlers
   function handleSearchChange(e) {
     setSearchTerm(e.target.value);
   }
@@ -151,18 +150,18 @@ function App() {
     return sortConfig.direction === "asc" ? "↑" : "↓";
   }
 
-  // Combined filtered list
+  // combined filtered list (filter, search, sort)
   const filteredSessions = useMemo(() => {
     let data = [...sessions];
 
-    // filter
+    // filter completion state
     data = data.filter((session) => {
       if (filter === "completed") return session.completed;
       if (filter === "pending") return !session.completed;
       return true;
     });
 
-    // search
+    // search in subject and notes
     const term = searchTerm.trim().toLowerCase();
     if (term) {
       data = data.filter((session) => {
@@ -175,8 +174,7 @@ function App() {
     // sort
     if (sortConfig.key) {
       data.sort((a, b) => {
-        let aVal;
-        let bVal;
+        let aVal, bVal;
         if (sortConfig.key === "subject") {
           aVal = (a.subject || "").toLowerCase();
           bVal = (b.subject || "").toLowerCase();
@@ -196,7 +194,9 @@ function App() {
     return data;
   }, [sessions, filter, searchTerm, sortConfig]);
 
-  // ===== Edit modal logic =====
+  // ========== Edit Modal Logic ==========
+
+  // open modal and prevent background scroll
   function openEditModal(session) {
     setEditSession({
       id: session.id,
@@ -205,43 +205,75 @@ function App() {
       date: session.date || "",
       notes: session.notes || "",
     });
-    // prevent background scroll
     document.body.style.overflow = "hidden";
   }
 
+  // close modal with exit animation
   function closeEditModal() {
-    setEditSession(null);
-    document.body.style.overflow = "";
+    // start exit animation
+    setIsClosing(true);
+
+    // allow animation to run before clearing modal state
+    // match this timeout to your CSS exit animation duration (250ms)
+    setTimeout(() => {
+      setEditSession(null);
+      setIsClosing(false);
+      document.body.style.overflow = "";
+    }, 260); // slightly larger than CSS to ensure it completes
   }
 
+  // modal field change while editing
   function handleEditChange(e) {
     const { name, value } = e.target;
-    setEditSession((prev) => ({ ...prev, [name]: value }));
+    setEditSession((prev) => (prev ? { ...prev, [name]: value } : prev));
   }
 
+  // save edited values
   function handleSaveEdit() {
-    // validation
+    if (!editSession) return;
     if (!editSession.subject || !editSession.duration || !editSession.date) {
       alert("Subject, duration and date are required.");
       return;
     }
     setSessions((prev) =>
-      prev.map((s) => (s.id === editSession.id ? { ...s, subject: editSession.subject, duration: Number(editSession.duration), date: editSession.date, notes: editSession.notes } : s))
+      prev.map((s) =>
+        s.id === editSession.id
+          ? {
+              ...s,
+              subject: editSession.subject,
+              duration: Number(editSession.duration),
+              date: editSession.date,
+              notes: editSession.notes,
+            }
+          : s
+      )
     );
+    // close with animation
     closeEditModal();
   }
 
-  // close modal on Escape
+  // close on Escape key
   useEffect(() => {
     function onKey(e) {
-      if (e.key === "Escape" && editSession) {
+      if (e.key === "Escape" && editSession && !isClosing) {
         closeEditModal();
       }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [editSession]);
+  }, [editSession, isClosing]);
 
+  // autofocus subject input when modal opens
+  useEffect(() => {
+    if (editSession && !isClosing) {
+      // small timeout to wait for DOM render & animation start
+      setTimeout(() => {
+        if (editSubjectRef.current) editSubjectRef.current.focus();
+      }, 80);
+    }
+  }, [editSession, isClosing]);
+
+  // UI
   return (
     <div className="app">
       <header className="app-header">
@@ -275,7 +307,7 @@ function App() {
       </section>
 
       <main className="layout">
-        {/* Form */}
+        {/* Form section */}
         <section className="session-form">
           <h2>Add New Session</h2>
           <form onSubmit={handleSubmit}>
@@ -305,13 +337,12 @@ function App() {
           </form>
         </section>
 
-        {/* List */}
+        {/* List section */}
         <section className="session-list">
           <div className="session-list-header">
             <h2>Study Sessions</h2>
 
             <div className="header-actions">
-              {/* filter buttons */}
               <div className="filter-buttons">
                 <button type="button" className={`filter-btn ${filter === "all" ? "active" : ""}`} onClick={() => setFilter("all")}>
                   All
@@ -392,13 +423,33 @@ function App() {
 
       {/* Edit Modal */}
       {editSession && (
-        <div className="modal-overlay" onMouseDown={(e) => { if (e.target.classList.contains("modal-overlay")) closeEditModal(); }}>
-          <div className="modal-card" role="dialog" aria-modal="true" aria-labelledby="edit-modal-title">
+        <div
+          className={`modal-overlay ${isClosing ? "closing" : ""}`}
+          onMouseDown={(e) => {
+            // close only when overlay (not inner modal) is clicked
+            if (e.target.classList.contains("modal-overlay") && !isClosing) closeEditModal();
+          }}
+          role="presentation"
+        >
+          <div
+            className={`modal-card ${isClosing ? "closing" : ""}`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="edit-modal-title"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
             <h3 id="edit-modal-title">Edit Session</h3>
 
             <div className="field">
               <label htmlFor="edit-subject">Subject</label>
-              <input id="edit-subject" name="subject" type="text" value={editSession.subject} onChange={handleEditChange} />
+              <input
+                id="edit-subject"
+                ref={editSubjectRef}
+                name="subject"
+                type="text"
+                value={editSession.subject}
+                onChange={handleEditChange}
+              />
             </div>
 
             <div className="field">
@@ -417,10 +468,10 @@ function App() {
             </div>
 
             <div style={{ display: "flex", gap: "0.75rem", marginTop: "1rem", justifyContent: "flex-end" }}>
-              <button type="button" className="link-btn" onClick={closeEditModal}>
+              <button type="button" className="link-btn" onClick={() => !isClosing && closeEditModal()}>
                 Cancel
               </button>
-              <button type="button" className="primary-btn" onClick={handleSaveEdit}>
+              <button type="button" className="primary-btn" onClick={() => !isClosing && handleSaveEdit()}>
                 Save
               </button>
             </div>
