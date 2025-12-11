@@ -52,6 +52,17 @@ function App() {
   // filter state: "all" | "completed" | "pending"
   const [filter, setFilter] = useState("all");
 
+  // 🔎 NEW: search term
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // 🔽 NEW: sort config
+  // key: "date" | "duration" | "subject"
+  // direction: "asc" | "desc"
+  const [sortConfig, setSortConfig] = useState({
+    key: "date",
+    direction: "asc",
+  });
+
   // Save sessions to localStorage whenever they change
   useEffect(() => {
     try {
@@ -140,14 +151,87 @@ function App() {
     } catch (err) {
       console.error("Failed to clear localStorage:", err);
     }
+    setSearchTerm("");
+    setFilter("all");
+    setSortConfig({ key: "date", direction: "asc" });
   }
 
-  // derived list based on filter
-  const filteredSessions = sessions.filter((session) => {
-    if (filter === "completed") return session.completed;
-    if (filter === "pending") return !session.completed;
-    return true; // "all"
-  });
+  // 🔎 handle search box change
+  function handleSearchChange(e) {
+    setSearchTerm(e.target.value);
+  }
+
+  // 🔽 handle sort when clicking on header
+  function handleSort(key) {
+    setSortConfig((prev) => {
+      if (prev.key === key) {
+        // toggle direction
+        return {
+          key,
+          direction: prev.direction === "asc" ? "desc" : "asc",
+        };
+      }
+      return { key, direction: "asc" };
+    });
+  }
+
+  // helper for showing arrow in header
+  function getSortIndicator(key) {
+    if (sortConfig.key !== key) return "";
+    return sortConfig.direction === "asc" ? "↑" : "↓";
+  }
+
+  // 🔁 NEW: filter + search + sort combined
+  const filteredSessions = useMemo(() => {
+    let data = [...sessions];
+
+    // filter by completion
+    data = data.filter((session) => {
+      if (filter === "completed") return session.completed;
+      if (filter === "pending") return !session.completed;
+      return true; // "all"
+    });
+
+    // search by subject or notes
+    const term = searchTerm.trim().toLowerCase();
+    if (term) {
+      data = data.filter((session) => {
+        const subject = session.subject?.toLowerCase() || "";
+        const notes = session.notes?.toLowerCase() || "";
+        return (
+          subject.includes(term) ||
+          notes.includes(term)
+        );
+      });
+    }
+
+    // sort
+    if (sortConfig.key) {
+      data.sort((a, b) => {
+        let aVal;
+        let bVal;
+
+        if (sortConfig.key === "subject") {
+          aVal = (a.subject || "").toLowerCase();
+          bVal = (b.subject || "").toLowerCase();
+        } else if (sortConfig.key === "duration") {
+          aVal = Number(a.duration) || 0;
+          bVal = Number(b.duration) || 0;
+        } else if (sortConfig.key === "date") {
+          aVal = new Date(a.date || 0).getTime();
+          bVal = new Date(b.date || 0).getTime();
+        } else {
+          return 0;
+        }
+
+        if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
+        if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
+        return 0;
+      });
+    }
+
+    return data;
+  }, [sessions, filter, searchTerm, sortConfig]);
 
   return (
     <div className="app">
@@ -277,29 +361,62 @@ function App() {
                 </button>
               </div>
 
-              {/* reset button */}
-              <button
-                type="button"
-                className="link-btn"
-                onClick={handleResetData}
-              >
-                Reset to sample data
-              </button>
+              {/* 🔎 search + reset */}
+              <div className="search-and-reset">
+                <input
+                  type="text"
+                  className="search-input"
+                  placeholder="Search subject or notes..."
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                />
+                <button
+                  type="button"
+                  className="link-btn"
+                  onClick={handleResetData}
+                >
+                  Reset to sample data
+                </button>
+              </div>
             </div>
           </div>
 
           {filteredSessions.length === 0 ? (
-            <p>No sessions for this filter.</p>
+            <p>No sessions match this filter.</p>
           ) : (
             <table>
               <thead>
                 <tr>
                   <th>#</th>
-                  <th>Subject</th>
-                  <th>Duration (mins)</th>
-                  <th>Date</th>
+                  <th
+                    className="sortable"
+                    onClick={() => handleSort("subject")}
+                  >
+                    Subject{" "}
+                    <span className="sort-indicator">
+                      {getSortIndicator("subject")}
+                    </span>
+                  </th>
+                  <th
+                    className="sortable"
+                    onClick={() => handleSort("duration")}
+                  >
+                    Duration (mins){" "}
+                    <span className="sort-indicator">
+                      {getSortIndicator("duration")}
+                    </span>
+                  </th>
+                  <th
+                    className="sortable"
+                    onClick={() => handleSort("date")}
+                  >
+                    Date{" "}
+                    <span className="sort-indicator">
+                      {getSortIndicator("date")}
+                    </span>
+                  </th>
                   <th>Status</th>
-                  <th>Actions</th> {/* Task 2 column */}
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
